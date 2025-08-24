@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CTIA 1–88 題｜隨機抽 50 題測驗（ABCD 點選）</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 0; background: #f7f7f7;}
+    .container {max-width: 900px; margin: auto; padding: 20px;}
+    .card {background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+    .controls button {margin-right: 10px; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer;}
+    .primary {background: #007bff; color: white;}
+    .ghost {background: #e0e0e0;}
+    .qwrap {margin-top: 20px;}
+    .question {margin-bottom: 10px; font-weight: bold;}
+    .options label {display: block; margin-bottom: 8px; cursor: pointer;}
+    .submit-btn {margin-top: 10px; padding: 8px 15px; border: none; border-radius: 6px; background: #28a745; color: #fff; cursor: pointer;}
+    #result {font-size: 18px; margin-top: 20px;}
+    .correct {color: green;}
+    .wrong {color: red;}
+    .translation {margin-top: 10px; font-style: italic;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card">
+      <h1>CTIA 題庫測驗（1–88 題）</h1>
+      <p class="sub">支援「<b>隨機抽 50 題</b>」或「<b>全部作答</b>」。ABCD 單選，送出後顯示分數、<b>中文翻譯與解釋</b>。<br><span class="muted">第一部分：程式碼已完成，題庫請貼在 <code>QUESTION_BANK</code> 陣列。</span></p>
+      <div class="controls">
+        <button id="btn50" class="primary">隨機抽 50 題開始</button>
+        <button id="btnAll">全部題目開始</button>
+        <button id="btnReset" class="ghost" disabled>重置</button>
+      </div>
+    </header>
+
+    <div id="quiz" class="card qwrap" style="display:none"></div>
+    <div id="result"></div>
+  </div>
+
+<script>
+// ===== 題庫資料格式 =====
+// id: 題號（1~88），question: 英文原文題目（與紙本一致）
+// options: 4 個選項，answerIndex: 正解索引 0~3
+// zh: 中文翻譯；explanationZh: 中文解釋
+
+const QUESTION_BANK = [
+// === Q1–Q20 ===
+{
+  id: 1,
+  question: "Daniel is a professional hacker whose aim is to attack a system to steal data and money for profit. He performs hacking to obtain confidential data such as social security numbers, personally identifiable information (PII) of an employee, and credit card information. After obtaining confidential data, he further sells the information on the black market to make money. Daniel comes under which of the following types of threat actor?",
+  options: ["Industrial spies","State-sponsored hackers","Insider threat","Organized hackers"],
+  answerIndex: 3,
+  zh: "駭客 Daniel 為牟利竊取社保號、員工 PII、信用卡等資料，並在黑市販售。他屬於哪類威脅行為者？",
+  explanationZh: "以經濟利益為主要動機、成員有組織分工並販售資料，屬於 Organized hackers。"
+},
+{
+  id: 2,
+  question: "An attacker instructs bots to use camouflage mechanism to hide his phishing and malware delivery locations in the rapidly changing network of compromised bots. In this particular technique, a single domain name consists of multiple IP addresses. Which of the following technique is used by the attacker?",
+  options: ["DNS zone transfer","Dynamic DNS","DNS interrogation","Fast-Flux DNS"],
+  answerIndex: 3,
+  zh: "攻擊者在殭屍網路中隱藏釣魚與惡意程式投放位置，一個網域名稱對應多個 IP。這稱為哪種技術？",
+  explanationZh: "Fast-Flux DNS 透過快速變換 IP/多重 A 記錄隱匿實際主機位置。"
+},
+{
+  id: 3,
+  question: "Kathy wants to ensure that she shares threat intelligence containing sensitive information with the appropriate audience. Hence, she used traffic light protocol (TLP). Which TLP color would you signify that information should be shared only within a particular community?",
+  options: ["Red","White","Green","Amber"],
+  answerIndex: 2,
+  zh: "Kathy 使用 TLP 分享敏感情資。哪個顏色表示只能在特定社群/社群內部分享？",
+  explanationZh: "TLP:GREEN 允許在社群內分享；RED 不分享；AMBER 僅限組織內（及必要客戶）；WHITE 公開。"
+},
+{
+  id: 4,
+  question: "Moses, a threat intelligence analyst at InfoTec Inc., wants to find crucial information about the potential threats the organization is facing by using advanced Google search operators. He wants to identify whether any fake websites are hosted at the similar to the organization's URL. Which of the following Google search queries should Moses use?",
+  options: ["related: www.infotech.org","info: www.infotech.org","link: www.infotech.org","cache: www.infotech.org"],
+  answerIndex: 0,
+  zh: "分析師想找與組織網址相似、可能是假站的網站，應用哪個 Google 進階搜尋字串？",
+  explanationZh: "使用 `related:` 可找出與該站點相似的網站，有助發現冒名或鏡像站。"
+},
+{
+  id: 5,
+  question: "A team of threat intelligence analysts is performing threat analysis on malware, and each of them has come up with their own theory and evidence to support their theory on a given malware. Now, to identify the most consistent theory out of all the theories, which of the following analytic processes must threat intelligence manager use?",
+  options: ["Threat modelling","Application decomposition and analysis (ADA)","Analysis of competing hypotheses (ACH)","Automated technical analysis"],
+  answerIndex: 2,
+  zh: "多位分析師提出不同惡意程式假說與證據，要找出最一致的假說應用哪種分析流程？",
+  explanationZh: "ACH（互相競爭假說分析）用以比較多個假說與證據，評估不相容性後選出最合理者。"
+},
+{
+  id: 6,
+  question: "Miley, an analyst, wants to reduce the amount of collected data and make the storing and sharing process easy. She uses filtering, tagging, and queuing technique to sort out the relevant and structured data from the large amounts of unstructured data. Which of the following techniques was employed by Miley?",
+  options: ["Sandboxing","Normalization","Data visualization","Convenience sampling"],
+  answerIndex: 1,
+  zh: "為了降低資料量並利於儲存/分享，透過過濾、標籤、排程把非結構化資料轉成結構化。這稱為？",
+  explanationZh: "Normalization（正規化）將雜亂資料整理成一致、可處理的形式。"
+},
+{
+  id: 7,
+  question: "Bob, a threat analyst, works in an organization named TechTop. He was asked to collect intelligence to fulfil the needs and requirements of the Red Team present within the organization. Which of the following are the needs of a RedTeam?",
+  options: ["Intelligence related to increased attacks targeting a particular software or operating system vulnerability","Intelligence on latest vulnerabilities, threat actors, and their tactics, techniques, and procedures (TTPs)","Intelligence extracted latest attacks analysis on similar organizations, which includes details about latest threats and TTPs","Intelligence that reveals risks related to various strategic business decisions"],
+  answerIndex: 1,
+  zh: "為支援紅隊需求，應提供何種情資？",
+  explanationZh: "紅隊偏戰術/技術層：最新弱點、威脅行為者與 TTPs。"
+},
+{
+  id: 8,
+  question: "Michael, a threat analyst, works in an organization named TechTop, was asked to conduct a cyber-threat intelligence analysis. After obtaining information regarding threats, he has started analyzing the information and understanding the nature of the threats. What stage of the cyber-threat intelligence is Michael currently in?",
+  options: ["Unknown unknowns","Unknowns unknown","Known unknowns","Known knowns"],
+  answerIndex: 2,
+  zh: "取得威脅資訊後，開始分析與理解威脅本質。屬於何種『已知/未知』階段？",
+  explanationZh: "Known unknowns：知道有議題，但細節仍未知，正在分析以釐清。"
+},
+{
+  id: 9,
+  question: "Enrage Tech Company hired Enrique, a security analyst, for performing threat intelligence analysis. While performing data collection process, he used a counterintelligence mechanism where a recursive DNS server is employed to perform interserver DNS communication and when the request is generated from any name server to the recursive DNS server, the recursive DNS servers log the responses that are received. Then it replicates the logged data and stores the data in the central database. Using these logs, he analyzed the malicious attempts that took place over DNS infrastructure. Which of the following cyber counterintelligence (CCI) gathering technique has Enrique used for data collection?",
+  options: ["Data collection through passive DNS monitoring","Data collection through DNS interrogation","Data collection through DNS zone transfer","Data collection through dynamic DNS (DDNS)"],
+  answerIndex: 0,
+  zh: "利用遞迴 DNS 記錄查詢與回應並集中分析惡意嘗試，屬於哪種 CCI 蒐集技術？",
+  explanationZh: "Passive DNS monitoring 透過 DNS 記錄分析惡意基礎設施與行為。"
+},
+{
+  id: 10,
+  question: "John, a professional hacker, is trying to perform APT attack on the target organization network. He gains access to a single system of a target organization and tries to obtain administrative login credentials to gain further access to the systems in the network using various techniques. What phase of the advanced persistent threat lifecycle is John currently in?",
+  options: ["Initial intrusion","Search and exfiltration","Expansion","Persistence"],
+  answerIndex: 2,
+  zh: "入侵一台主機後嘗試取得系統管理權限並擴大控制範圍，屬 APT 生命週期哪一階段？",
+  explanationZh: "Expansion（橫向移動/擴張）包含提權與橫向滲透。"
+},
+{
+  id: 11,
+  question: "Jim works as a security analyst in a large multinational company. Recently, a group of hackers penetrated into their organizational network and used a data staging technique to collect sensitive data. They collected all sorts of sensitive data about the employees and customers, business tactics of the organization, financial information, network infrastructure information and so on. What should Jim do to detect the data staging before the hackers exfiltrate from the network?",
+  options: ["Jim should identify the attack at an initial stage by checking the content of the user agent field.","Jim should analyze malicious DNS requests, DNS payload, unspecified domains, and destination of DNS requests.","Jim should monitor network traffic for malicious file transfers, file integrity monitoring, and event logs.","Jim should identify the web shell running in the network by analyzing server access, error logs, suspicious strings indicating encoding, user agent strings, and so on."],
+  answerIndex: 2,
+  zh: "駭客進行資料彙整（data staging）準備外傳時，該如何偵測？",
+  explanationZh: "監看惡意檔案傳輸、檔案完整性與事件日誌能在外洩前偵測到 staging 活動。"
+},
+{
+  id: 12,
+  question: "Andrews and Sons Corp. has decided to share threat information among sharing partners. Garry, a threat analyst, working in Andrews and Sons Corp., has asked to follow a trust model necessary to establish trust between sharing partners. In the trust model used by him, the first organization makes use of a body of evidence in a second organization, and the level of trust between two organizations depends on the degree and quality of evidence provided by the first organization. Which of the following types of trust model is used by Garry to establish the trust?",
+  options: ["Mediated trust","Mandated trust","Direct historical trust","Validated trust"],
+  answerIndex: 3,
+  zh: "以第一個組織提供的證據品質/程度來建立雙方信任，屬於哪種信任模型？",
+  explanationZh: "Validated trust 以證據驗證為基礎。"
+},
+{
+  id: 13,
+  question: "A threat analyst obtains an intelligence related to a threat, where the data is sent in the form of a connection request from a remote host to the server. From this data, he obtains only the IP address of the source and destination but no contextual information. While processing this data, he obtains contextual information stating that multiple connection requests from different geo-locations are received by the server within a short time span, and as a result the server is stressed and gradually its performance has reduced. He further performed analysis on the information based on the past and present experience and concludes the attack experienced by the client organization. Which of the following attacks is performed on the client organization?",
+  options: ["DHCP attacks","MAC spoofing attack","Distributed Denial-of-Service (DDoS) attack","Bandwidth attack"],
+  answerIndex: 2,
+  zh: "伺服器在短時間收到來自多地理位置的大量連線請求而效能下降，這是哪種攻擊？",
+  explanationZh: "多源頭大量請求造成服務資源耗盡，典型 DDoS。"
+},
+{
+  id: 14,
+  question: "Jame, a professional hacker, is trying to hack the confidential information of a target organization. He identified the vulnerabilities in the target system and created a tailored deliverable malicious payload using an exploit and a backdoor to send it to the victim. Which of the following phases of cyber kill chain methodology is Jame executing?",
+  options: ["Reconnaissance","Installation","Weaponization","Exploitation"],
+  answerIndex: 2,
+  zh: "找出弱點並結合 exploit 與 backdoor 產製可投遞惡意載荷，屬於 CKC 的哪一階段？",
+  explanationZh: "Weaponization（武器化）。"
+},
+{
+  id: 15,
+  question: "Steve works as an analyst in a UK-based firm. He was asked to perform network monitoring to find any evidence of compromise. During the network monitoring, he came to know that there are multiple logins from different locations in a short time span. Moreover, he also observed certain irregular log-in patterns from locations where the organization does not have business relations. This resembles that somebody is trying to steal confidential information. Which of the following key indicators of compromise does this scenario present?",
+  options: ["Unusual outbound network traffic","Unexpected patching of systems","Unusual activity through privileged user account","Geographical anomalies"],
+  answerIndex: 3,
+  zh: "短時間內於不同地理位置登入，且含公司無業務往來之地，屬於哪種 IoC？",
+  explanationZh: "地理異常（Geographical anomalies）。"
+},
+{
+  id: 16,
+  question: "Which of the following characteristics of APT refers to numerous attempts done by the attacker to gain entry to the target's network?",
+  options: ["Risk tolerance","Timeliness","Attack origination points","Multiphasic"],
+  answerIndex: 2,
+  zh: "APT 的哪項特徵指的是攻擊者多次嘗試入侵目標網路？",
+  explanationZh: "Attack origination points 指多個來源/多次嘗試的入侵節點與通路。"
+},
+{
+  id: 17,
+  question: "Lizzy, an analyst, wants to recognize the level of risks to the organization so as to plan countermeasures against cyber attacks. She used a threat modelling methodology where she performed the following stages: Stage 1: Develop asset-based threat profiles; Stage 2: Identify infrastructure vulnerabilities; Stage 3: Develop security strategy and plans. Which of the following threat modelling methodologies was used by Lizzy in the aforementioned scenario?",
+  options: ["TRIKE","VAST","OCTAVE","DREAD"],
+  answerIndex: 2,
+  zh: "依資產建立威脅剖面、找出基礎建設弱點、制定安全策略與計畫，此為哪種威脅建模？",
+  explanationZh: "OCTAVE 方法論強調資產驅動與策略/計畫擬定。"
+},
+{
+  id: 18,
+  question: "Which of the following types of threat attribution deals with the identification of the specific person, society, or a country sponsoring a well-planned and executed intrusion or attack over its target?",
+  options: ["Nation-state attribution","True attribution","Campaign attribution","Intrusion-set attribution"],
+  answerIndex: 1,
+  zh: "針對精心策畫並執行的攻擊，直接指認特定個人/組織/國家為幕後者，屬於哪種歸因？",
+  explanationZh: "True attribution（真實歸因）著重具體實體的識別。"
+},
+{
+  id: 19,
+  question: "In a team of threat analysts, two individuals were competing over projecting their own hypotheses on a given malware. However, to find logical proofs to confirm their hypotheses, the threat intelligence manager used a de-biasing strategy that involves learning strategic decision making in circumstances comprising multiple interactions with numerous representatives, either having or without any perfect relevant information. Which of the following de-biasing strategies the threat intelligence manager used to confirm their hypotheses?",
+  options: ["Game theory","Machine learning","Decision theory","Cognitive psychology"],
+  answerIndex: 0,
+  zh: "為避免偏誤、在多方互動且資訊不完美情境下找出合理策略並驗證假說，使用了哪種去偏誤策略？",
+  explanationZh: "博弈論（Game theory）可於多方策略互動下推導最適決策並降低認知偏差。"
+},
+{
+  id: 20,
+  question: "CyberSol Technologies initiated a strategic threat intelligence program with a team of threat intelligence analysts. During the process, the analysts started converting the raw data into useful information by applying various techniques, such as machine-based techniques, and statistical methods. In which of the following phases of the threat intelligence lifecycle is the threat intelligence team currently working?",
+  options: ["Dissemination and integration","Planning and direction","Processing and exploitation","Analysis and production"],
+  answerIndex: 2,
+  zh: "分析師將原始資料透過機器與統計方法轉為可用資訊，位於情資生命週期哪一階段？",
+  explanationZh: "Processing and exploitation（處理與開採）。"
+},
+// === Q21–Q40 ===
+{
+  id: 21,
+  question: "Megan, a threat analyst, has identified a malware that is targeting the web server of her organization. She wants to know the complete life cycle of the malware to understand how it spreads, its infection mechanism, and its persistence. Which of the following threat intelligence categories will help Megan to achieve her objective?",
+  options: ["Operational threat intelligence","Strategic threat intelligence","Technical threat intelligence","Tactical threat intelligence"],
+  answerIndex: 0,
+  zh: "Megan 想了解惡意程式的完整生命週期與感染/持續方式，應採用哪種威脅情報？",
+  explanationZh: "Operational threat intelligence 提供惡意程式行為與攻擊生命週期的深入細節。"
+},
+{
+  id: 22,
+  question: "Which of the following types of threat modeling methodology focuses on identifying and addressing threats from the perspective of an attacker rather than from the perspective of assets?",
+  options: ["DREAD","VAST","STRIDE","Attack trees"],
+  answerIndex: 3,
+  zh: "哪種威脅建模方法是從攻擊者視角而不是資產視角來辨識威脅？",
+  explanationZh: "Attack trees 以攻擊者的可能行為為核心建模。"
+},
+{
+  id: 23,
+  question: "David, a threat intelligence analyst, is using a method where he is considering current and future factors that could affect threats. He lists multiple possible future scenarios and examines the plausibility of each to predict the most likely outcome. Which analysis method is David using?",
+  options: ["Cone of plausibility","SWOT analysis","Linchpin analysis","Critical path analysis"],
+  answerIndex: 0,
+  zh: "David 建立多種可能的未來情境並檢視其合理性，以預測最可能結果。這是哪種分析方法？",
+  explanationZh: "Cone of plausibility 用於推演不同未來情境的可能性。"
+},
+{
+  id: 24,
+  question: "Jennifer, a CISO, wants to establish a model to understand and measure the impact of threat events on her organization. She uses a risk assessment methodology that considers the value of assets, the threats to those assets, vulnerabilities, and existing controls. Which risk assessment methodology is Jennifer using?",
+  options: ["FAIR","OCTAVE","NIST SP 800-30","ISO 27005"],
+  answerIndex: 1,
+  zh: "CISO 使用資產價值、威脅、弱點與控制措施來衡量風險，這是哪種風險評估方法？",
+  explanationZh: "OCTAVE 強調資產為核心的威脅與風險評估。"
+},
+{
+  id: 25,
+  question: "Which type of threat intelligence provides high-level information about cyber threats, focusing on long-term trends and motivations of threat actors, and is mainly consumed by executives and decision-makers?",
+  options: ["Technical threat intelligence","Operational threat intelligence","Strategic threat intelligence","Tactical threat intelligence"],
+  answerIndex: 2,
+  zh: "哪種威脅情報提供長期趨勢與威脅行為者動機，主要由高層決策者使用？",
+  explanationZh: "Strategic threat intelligence 提供宏觀視角。"
+},
+{
+  id: 26,
+  question: "Richard, a threat analyst, is examining threat intelligence reports that describe adversaries' tools, techniques, and procedures (TTPs) used during cyber attacks. What type of threat intelligence is Richard working with?",
+  options: ["Tactical threat intelligence","Technical threat intelligence","Strategic threat intelligence","Operational threat intelligence"],
+  answerIndex: 0,
+  zh: "Richard 檢視描述對手 TTP 的情報，這是哪種類型？",
+  explanationZh: "Tactical threat intelligence 專注於 TTPs。"
+},
+{
+  id: 27,
+  question: "In which stage of the intelligence cycle are the collected raw data evaluated, analyzed, and transformed into finished intelligence products that can be used for decision-making?",
+  options: ["Collection","Analysis and production","Processing and exploitation","Dissemination"],
+  answerIndex: 1,
+  zh: "情報循環中哪一階段會將蒐集到的原始資料分析並轉化成可用情報？",
+  explanationZh: "Analysis and production 階段會產出可行的情報產品。"
+},
+{
+  id: 28,
+  question: "An intelligence analyst is validating the quality and reliability of collected threat data by cross-checking with multiple sources before using it for decision-making. Which phase of the intelligence cycle is the analyst performing?",
+  options: ["Processing and exploitation","Collection","Analysis and production","Direction"],
+  answerIndex: 0,
+  zh: "分析師透過多方交叉檢查來驗證資料的品質與可靠性，屬於情報循環哪一階段？",
+  explanationZh: "Processing and exploitation 包含對資料的整理、驗證。"
+},
+{
+  id: 29,
+  question: "A company is using a methodology to prioritize potential threats by assigning values based on their likelihood and potential impact. This helps in focusing resources on the most significant risks. Which methodology is the company applying?",
+  options: ["DREAD","CVSS","OCTAVE","NIST RMF"],
+  answerIndex: 0,
+  zh: "公司用一種方法依威脅的可能性與影響來排序，集中資源於最嚴重風險。這是哪種方法？",
+  explanationZh: "DREAD 模型用來評分威脅嚴重性。"
+},
+{
+  id: 30,
+  question: "Which of the following is a standard framework that defines categories of adversary behavior and helps in mapping TTPs to improve detection and response?",
+  options: ["MITRE ATT&CK","Diamond Model","Cyber Kill Chain","Lockheed Martin Framework"],
+  answerIndex: 0,
+  zh: "哪個標準框架定義了對手行為類別並協助映射 TTP 以改進偵測與回應？",
+  explanationZh: "MITRE ATT&CK 框架。"
+},
+{
+  id: 31,
+  question: "Emily, a threat analyst, is examining logs and notices multiple failed login attempts from different geographic locations within a short time frame. What type of indicator of compromise (IoC) is this?",
+  options: ["Unusual outbound traffic","Geographical anomalies","Suspicious registry changes","Unexpected patching"],
+  answerIndex: 1,
+  zh: "Emily 發現短時間多個地理位置的登入失敗，這是哪種 IoC？",
+  explanationZh: "屬於 Geographical anomalies（地理異常）。"
+},
+{
+  id: 32,
+  question: "Which threat modeling methodology uses data flow diagrams to identify and mitigate potential threats by focusing on trust boundaries and interactions?",
+  options: ["VAST","STRIDE","OCTAVE","Attack trees"],
+  answerIndex: 1,
+  zh: "哪種威脅建模方法使用資料流圖並專注於信任邊界與互動？",
+  explanationZh: "STRIDE 方法論。"
+},
+{
+  id: 33,
+  question: "John, a SOC analyst, wants to track attacker activities such as IP addresses, domain names, and file hashes. Which type of threat intelligence should he rely on?",
+  options: ["Strategic","Operational","Technical","Tactical"],
+  answerIndex: 2,
+  zh: "SOC 分析師想追蹤 IP、網域、檔案雜湊等，應使用哪種情報？",
+  explanationZh: "Technical threat intelligence 提供可直接用於檢測的指標。"
+},
+{
+  id: 34,
+  question: "Which risk assessment methodology provides a quantitative approach to measure risk in terms of probable frequency and magnitude of future loss?",
+  options: ["FAIR","OCTAVE","NIST RMF","ISO 27005"],
+  answerIndex: 0,
+  zh: "哪種風險評估方法採量化方式，衡量未來損失的可能頻率與幅度？",
+  explanationZh: "FAIR（Factor Analysis of Information Risk）。"
+},
+{
+  id: 35,
+  question: "A threat analyst is using a framework that consists of four core features: adversary, capability, infrastructure, and victim. Which framework is this?",
+  options: ["Diamond Model","MITRE ATT&CK","Cyber Kill Chain","STRIDE"],
+  answerIndex: 0,
+  zh: "哪個框架由對手、能力、基礎設施與受害者四大元素組成？",
+  explanationZh: "Diamond Model。"
+},
+{
+  id: 36,
+  question: "Which stage of the Cyber Kill Chain involves delivering the weaponized payload to the victim via phishing emails, malicious websites, or USB drives?",
+  options: ["Weaponization","Delivery","Exploitation","Installation"],
+  answerIndex: 1,
+  zh: "CKC 中哪個階段包含透過釣魚信件、惡意網站或 USB 傳送武器化載荷？",
+  explanationZh: "Delivery 階段。"
+},
+{
+  id: 37,
+  question: "Sarah, a threat analyst, is analyzing the probability of a cyber attack occurring against her organization and the potential impact it may have. Which component of risk assessment is she focusing on?",
+  options: ["Vulnerability","Threat","Impact","Likelihood"],
+  answerIndex: 3,
+  zh: "分析攻擊發生的機率與影響，Sarah 著重於風險評估的哪個要素？",
+  explanationZh: "Likelihood（可能性）。"
+},
+{
+  id: 38,
+  question: "Which de-biasing strategy involves using formal decision-making models and mathematical calculations to avoid biases in threat analysis?",
+  options: ["Game theory","Decision theory","Cognitive psychology","Machine learning"],
+  answerIndex: 1,
+  zh: "哪種去偏誤策略運用正式決策模型與數學計算以避免偏差？",
+  explanationZh: "Decision theory（決策理論）。"
+},
+{
+  id: 39,
+  question: "Which type of threat intelligence helps security teams to understand the tactics, techniques, and procedures (TTPs) of attackers to enhance defense mechanisms?",
+  options: ["Technical","Tactical","Strategic","Operational"],
+  answerIndex: 1,
+  zh: "哪種情資幫助安全團隊理解攻擊者 TTP 以增強防禦？",
+  explanationZh: "Tactical threat intelligence。"
+},
+{
+  id: 40,
+  question: "The company has already automated tasks like IOC aggregation but still operates reactively. What CTI maturity level does this represent?",
+  options: ["Level 2: increasing CTI capabilities","Level 3: CTI program in place","Level 1: preparing","Level 0: vague"],
+  answerIndex: 0,
+  zh: "公司已能自動化 IOC 聚合，但仍屬被動反應，這代表 CTI 成熟度的哪個層級？",
+  explanationZh: "Level 2: increasing CTI capabilities — 有自動化功能，但尚停留在被動偵測。"
+},
+// === Q41–Q60 ===
+{
+  id: 41,
+  question: "Which of the following trust models uses an intermediary entity to establish trust between two organizations?",
+  options: ["Mandated trust","Direct historical trust","Mediated trust","Validated trust"],
+  answerIndex: 2,
+  zh: "哪種信任模型透過中介實體來建立兩組織之間的信任？",
+  explanationZh: "Mediated trust（中介信任）依賴第三方仲介來建立信任關係。"
+},
+{
+  id: 42,
+  question: "Which type of data analysis method is based on finding similarities between current and historical data to make predictions?",
+  options: ["Analogy analysis","Linchpin analysis","Critical path analysis","Cone of plausibility"],
+  answerIndex: 0,
+  zh: "哪種資料分析方法根據當前與歷史資料的相似性來進行預測？",
+  explanationZh: "Analogy analysis（類比分析）。"
+},
+{
+  id: 43,
+  question: "Which type of threat intelligence exchange architecture involves each organization independently collecting and sharing threat intelligence without a centralized hub?",
+  options: ["Centralized exchange architecture","Hybrid exchange architecture","Decentralized exchange architecture","Federated exchange architecture"],
+  answerIndex: 2,
+  zh: "哪種威脅情報交換架構是各組織獨立蒐集並分享，沒有中央樞紐？",
+  explanationZh: "Decentralized exchange architecture（去中心化）。"
+},
+{
+  id: 44,
+  question: "Which of the following trust models is imposed by regulations or agreements, forcing organizations to trust each other regardless of evidence?",
+  options: ["Direct historical trust","Validated trust","Mandated trust","Mediated trust"],
+  answerIndex: 2,
+  zh: "哪種信任模型由規範或協議強制施加，無需證據也必須互相信任？",
+  explanationZh: "Mandated trust。"
+},
+{
+  id: 45,
+  question: "Which type of cyber threat intelligence is highly technical and provides details like file hashes, IP addresses, and domains?",
+  options: ["Tactical","Strategic","Operational","Technical"],
+  answerIndex: 3,
+  zh: "哪種威脅情報高度技術化，提供檔案雜湊、IP、網域等細節？",
+  explanationZh: "Technical threat intelligence。"
+},
+{
+  id: 46,
+  question: "An intelligence analyst is reviewing information that focuses on the high-level motivations of threat actors and long-term threat trends. Which type of threat intelligence is this?",
+  options: ["Operational","Strategic","Tactical","Technical"],
+  answerIndex: 1,
+  zh: "專注於威脅行為者的動機與長期趨勢，這是哪種威脅情報？",
+  explanationZh: "Strategic threat intelligence。"
+},
+{
+  id: 47,
+  question: "Which of the following stages of the threat intelligence lifecycle involves disseminating the finished intelligence to decision-makers and stakeholders?",
+  options: ["Planning and direction","Processing and exploitation","Collection","Dissemination and integration"],
+  answerIndex: 3,
+  zh: "威脅情報生命週期中，哪個階段負責將完成的情報散佈給決策者與相關單位？",
+  explanationZh: "Dissemination and integration。"
+},
+{
+  id: 48,
+  question: "Which phase of the Cyber Kill Chain involves the attacker installing malware or backdoors to maintain persistence within the target environment?",
+  options: ["Weaponization","Installation","Exploitation","Delivery"],
+  answerIndex: 1,
+  zh: "CKC 哪個階段包含安裝惡意程式或後門以維持持久性？",
+  explanationZh: "Installation 階段。"
+},
+{
+  id: 49,
+  question: "Which threat modeling methodology is lightweight and scales well for agile environments, focusing on applications and services?",
+  options: ["OCTAVE","Attack trees","VAST","STRIDE"],
+  answerIndex: 2,
+  zh: "哪種威脅建模方法較輕量，適合敏捷環境，聚焦於應用與服務？",
+  explanationZh: "VAST（Visual, Agile, and Simple Threat）。"
+},
+{
+  id: 50,
+  question: "Which type of bias occurs when analysts only look for evidence that supports their pre-existing beliefs while ignoring contradictory evidence?",
+  options: ["Confirmation bias","Anchoring bias","Availability bias","Hindsight bias"],
+  answerIndex: 0,
+  zh: "分析師只尋找支持自己既有信念的證據，忽略矛盾資訊，這是哪種偏誤？",
+  explanationZh: "Confirmation bias（確認偏誤）。"
+},
+{
+  id: 51,
+  question: "Which of the following types of threat intelligence is consumed by SOC analysts to improve detection and response capabilities, focusing on adversary TTPs?",
+  options: ["Tactical","Strategic","Operational","Technical"],
+  answerIndex: 0,
+  zh: "SOC 分析師用於改善偵測與回應、聚焦於攻擊者 TTP 的情報類型是？",
+  explanationZh: "Tactical threat intelligence。"
+},
+{
+  id: 52,
+  question: "Which stage of the Cyber Kill Chain involves exploiting a vulnerability to execute the delivered payload?",
+  options: ["Installation","Delivery","Exploitation","Weaponization"],
+  answerIndex: 2,
+  zh: "CKC 哪個階段涉及利用漏洞來執行已投遞的載荷？",
+  explanationZh: "Exploitation 階段。"
+},
+{
+  id: 53,
+  question: "You are a cybersecurity analyst working at a financial institution. An unusual pattern of financial transactions was detected, suggesting potential fraud or money laundering. What specific type of threat intelligence would you rely on?",
+  options: ["TECHINT","CHIS","SOCINT","FININT"],
+  answerIndex: 3,
+  zh: "金融機構發現異常金流，應依靠哪種類型的威脅情報？",
+  explanationZh: "FININT（Financial Intelligence）。"
+},
+{
+  id: 54,
+  question: "Sean works as a threat intelligence analyst. He is assigned a project for information gathering on a client's network to find potential threats. He tried to identify internal URLs but was unable to find any. Which service should Sean use?",
+  options: ["Netcraft.com","HTTrack","EmailTrackerPro","Archive.org WayBackMachine"],
+  answerIndex: 0,
+  zh: "分析師 Sean 想找公司的內部 URL，應使用哪個服務？",
+  explanationZh: "Netcraft 可用來發現主機與 URL 資訊。"
+},
+{
+  id: 55,
+  question: "While monitoring network activities, an unusual surge in outbound traffic was noticed. At which stage of incident response is the presence of an incident first confirmed?",
+  options: ["Eradication","Containment","Recovery","Identification"],
+  answerIndex: 3,
+  zh: "監測時發現異常外部流量，屬於事件回應哪個最初階段？",
+  explanationZh: "Identification（鑑別/識別）。"
+},
+{
+  id: 56,
+  question: "Jack is a hacker establishing an encrypted two-way communication channel with a victim system and applying privilege escalation techniques. Which Cyber Kill Chain phase is Jack in?",
+  options: ["Weaponization","Reconnaissance","Command and control","Delivery"],
+  answerIndex: 2,
+  zh: "Jack 與受害端建立加密的雙向通道並提權，屬於 CKC 哪一階段？",
+  explanationZh: "Command and control 階段。"
+},
+{
+  id: 57,
+  question: "Bob is a threat intelligence analyst. He identifies that the organization is vulnerable to application threats. Which are examples of such application threats?",
+  options: ["Footprinting and spoofing","Man-in-the-middle and physical security attacks","SQL injection and buffer overflow","DNS and ARP poisoning"],
+  answerIndex: 2,
+  zh: "應用層威脅的例子有哪些？",
+  explanationZh: "SQL Injection 與 Buffer Overflow 屬於應用程式層攻擊。"
+},
+{
+  id: 58,
+  question: "Marry wants to prioritize requirements to protect assets using an iterative approach. She classifies requirements as Must, Should, Could, or Won’t. Which methodology is this?",
+  options: ["MoSCoW","Data sampling","Fusion analysis","Data visualization"],
+  answerIndex: 0,
+  zh: "採用 Must/Should/Could/Won’t 分類需求優先順序的方法是？",
+  explanationZh: "MoSCoW 方法。"
+},
+{
+  id: 59,
+  question: "A consortium of organizations adopts a threat intelligence exchange architecture where all threat data is collected and disseminated through a single central hub. Which architecture is this?",
+  options: ["Hybrid exchange architecture","Federated exchange architecture","Decentralized exchange architecture","Centralized exchange architecture"],
+  answerIndex: 3,
+  zh: "多家機構透過單一中央樞紐匯集與散佈威脅資料，屬於哪種架構？",
+  explanationZh: "Centralized exchange architecture。"
+},
+{
+  id: 60,
+  question: "While analyzing a series of incidents, you notice a pattern of attacks from specific geographical locations. Which contextualization method would you use?",
+  options: ["Policy context","Historical context","Spatial context","Temporal context"],
+  answerIndex: 2,
+  zh: "發現攻擊來自特定地理位置，應使用哪種脈絡化方法？",
+  explanationZh: "Spatial context（空間脈絡）。"
+},
+// === Q61–Q88 ===
+{
+  id: 61,
+  question: "Which de-biasing strategy focuses on studying how people perceive, remember, think, speak, and solve problems in order to reduce biases in intelligence analysis?",
+  options: ["Game theory","Decision theory","Machine learning","Cognitive psychology"],
+  answerIndex: 3,
+  zh: "哪種去偏誤策略透過研究人類知覺、記憶、思考與解決問題方式來降低偏差？",
+  explanationZh: "Cognitive psychology（認知心理學）用於理解和糾正分析中的認知偏差。"
+},
+{
+  id: 62,
+  question: "Which type of trust model uses direct past experiences between organizations to establish trust?",
+  options: ["Validated trust","Direct historical trust","Mediated trust","Mandated trust"],
+  answerIndex: 1,
+  zh: "哪種信任模型依靠組織間的直接歷史經驗來建立信任？",
+  explanationZh: "Direct historical trust。"
+},
+{
+  id: 63,
+  question: "Which type of threat intelligence provides context about adversaries' intent, capabilities, and activities to help defenders understand potential future attacks?",
+  options: ["Operational","Tactical","Strategic","Technical"],
+  answerIndex: 0,
+  zh: "哪種威脅情報提供對手意圖、能力與活動的脈絡，有助於理解未來可能的攻擊？",
+  explanationZh: "Operational threat intelligence。"
+},
+{
+  id: 64,
+  question: "Which type of data analysis method involves identifying the most essential element that could cause a system to fail?",
+  options: ["Linchpin analysis","Cone of plausibility","Critical path analysis","Analogy analysis"],
+  answerIndex: 0,
+  zh: "哪種資料分析方法涉及找出可能導致系統失敗的最關鍵因素？",
+  explanationZh: "Linchpin analysis。"
+},
+{
+  id: 65,
+  question: "Which analysis method is used to determine the sequence of critical steps that must be completed to achieve a mission, identifying dependencies and bottlenecks?",
+  options: ["Cone of plausibility","Analogy analysis","Critical path analysis","Linchpin analysis"],
+  answerIndex: 2,
+  zh: "哪種分析方法用於確定完成任務必須完成的關鍵步驟順序，並識別依賴與瓶頸？",
+  explanationZh: "Critical path analysis（關鍵路徑分析）。"
+},
+{
+  id: 66,
+  question: "Which type of threat intelligence provides insights into high-level risks that may affect business strategies and is primarily intended for executives?",
+  options: ["Technical","Tactical","Strategic","Operational"],
+  answerIndex: 2,
+  zh: "哪種類型的情資提供對業務策略可能影響的高層風險洞察，主要供高層主管使用？",
+  explanationZh: "Strategic threat intelligence。"
+},
+{
+  id: 67,
+  question: "Jacob, a professional hacker, created an exact replica of an online shopping website. He copied the entire contents of the original website onto the local system that enables him to create a dummy spam website for performing social engineering attacks over the employees. What type of technique did Jacob use for cloning the website?",
+  options: ["Data sampling","Social engineering","Tailgating","Website mirroring"],
+  answerIndex: 3,
+  zh: "駭客 Jacob 完整複製一個購物網站到本地，建立假站進行社交工程攻擊。這是哪種技術？",
+  explanationZh: "Website mirroring（網站鏡像）。"
+},
+{
+  id: 68,
+  question: "Which of the following steps in the threat intelligence lifecycle involves collecting raw data from various internal and external sources?",
+  options: ["Collection","Processing and exploitation","Analysis and production","Dissemination and integration"],
+  answerIndex: 0,
+  zh: "威脅情報生命週期中，哪個步驟包含從各種內外部來源收集原始資料？",
+  explanationZh: "Collection。"
+},
+{
+  id: 69,
+  question: "Which type of sharing model allows organizations to selectively share threat intelligence with trusted partners rather than with everyone?",
+  options: ["Open sharing model","Selective sharing model","Closed sharing model","Federated sharing model"],
+  answerIndex: 1,
+  zh: "哪種分享模型允許組織僅與受信任的合作夥伴選擇性分享情資？",
+  explanationZh: "Selective sharing model。"
+},
+{
+  id: 70,
+  question: "Which of the following processes involves proactively searching through networks and datasets to detect and isolate advanced threats that evade existing security solutions?",
+  options: ["Threat hunting","Vulnerability assessment","Penetration testing","Incident response"],
+  answerIndex: 0,
+  zh: "哪個過程是主動搜尋網路與資料集來偵測/隔離躲避現有防禦的進階威脅？",
+  explanationZh: "Threat hunting（威脅狩獵）。"
+},
+{
+  id: 71,
+  question: "Which type of data analysis involves examining information collected over a period of time to identify patterns and trends?",
+  options: ["Statistical data analysis","Analogy analysis","Linchpin analysis","Critical path analysis"],
+  answerIndex: 0,
+  zh: "哪種資料分析方法是檢視一段時間內收集的資訊以找出模式與趨勢？",
+  explanationZh: "Statistical data analysis（統計分析）。"
+},
+{
+  id: 72,
+  question: "Which concept refers to the overall environment of threats and risks that an organization faces at a given time?",
+  options: ["Threat matrix","Threat landscape","Threat model","Threat surface"],
+  answerIndex: 1,
+  zh: "哪個概念指的是組織在特定時間所面臨的整體威脅與風險環境？",
+  explanationZh: "Threat landscape（威脅環境）。"
+},
+{
+  id: 73,
+  question: "Which type of human intelligence (HUMINT) is obtained from individuals who have a direct relationship with the target, such as employees or insiders?",
+  options: ["CHIS","FININT","SOCINT","TECHINT"],
+  answerIndex: 0,
+  zh: "哪種人力情報來自與目標有直接關係的個人（如員工、內部人員）？",
+  explanationZh: "CHIS（Covert Human Intelligence Source）。"
+},
+{
+  id: 74,
+  question: "The CEO of a company requests a report on emerging cyber threats that could impact business operations over the next five years. What type of threat intelligence is required?",
+  options: ["Strategic","Technical","Operational","Tactical"],
+  answerIndex: 0,
+  zh: "CEO 想要一份未來五年可能影響業務營運的新興網路威脅報告，這需要哪種情資？",
+  explanationZh: "Strategic threat intelligence。"
+},
+{
+  id: 75,
+  question: "Which type of threat intelligence focuses on specific campaigns, incidents, or intrusions and provides insights into attacker behavior?",
+  options: ["Operational","Tactical","Strategic","Technical"],
+  answerIndex: 0,
+  zh: "哪種類型的情資聚焦於特定攻擊活動/入侵並提供行為洞察？",
+  explanationZh: "Operational threat intelligence。"
+},
+{
+  id: 76,
+  question: "Which type of threat intelligence provides information that helps defenders understand the adversaries’ TTPs (tactics, techniques, and procedures)?",
+  options: ["Strategic","Technical","Tactical","Operational"],
+  answerIndex: 2,
+  zh: "哪種類型的情資提供資訊，幫助防禦者理解攻擊者的 TTPs？",
+  explanationZh: "Tactical threat intelligence。"
+},
+{
+  id: 77,
+  question: "Which phase of incident response involves determining whether a security event has occurred and assessing its nature?",
+  options: ["Containment","Eradication","Identification","Recovery"],
+  answerIndex: 2,
+  zh: "事件回應哪個階段負責判斷是否發生安全事件並評估其性質？",
+  explanationZh: "Identification（鑑別）。"
+},
+{
+  id: 78,
+  question: "Which step of the intelligence cycle involves evaluating the effectiveness of intelligence products and identifying areas for improvement?",
+  options: ["Analysis and production","Processing and exploitation","Dissemination and integration","Evaluation and feedback"],
+  answerIndex: 3,
+  zh: "情報循環哪一步驟評估情報產品的有效性並找出改進之處？",
+  explanationZh: "Evaluation and feedback（評估與回饋）。"
+},
+{
+  id: 79,
+  question: "Which type of social engineering attack involves an attacker impersonating a trusted individual to trick the victim into disclosing information?",
+  options: ["Tailgating","Pretexting","Shoulder surfing","Impersonation"],
+  answerIndex: 3,
+  zh: "哪種社交工程攻擊是攻擊者假冒受信任者以誘使受害者洩漏資訊？",
+  explanationZh: "Impersonation（冒充）。"
+},
+{
+  id: 80,
+  question: "Which machine learning technique uses feedback from previous actions and outcomes to learn optimal strategies for decision-making?",
+  options: ["Reinforcement learning","Supervised learning","Unsupervised learning","Deep learning"],
+  answerIndex: 0,
+  zh: "哪種機器學習技術利用前次行為與結果的回饋來學習最佳決策策略？",
+  explanationZh: "Reinforcement learning（強化學習）。"
+},
+{
+  id: 81,
+  question: "Which CTI maturity level describes organizations that are still vague in their CTI practices and have no structured program?",
+  options: ["Level 0","Level 1","Level 2","Level 3"],
+  answerIndex: 0,
+  zh: "哪個 CTI 成熟度等級描述尚未具體化、沒有結構化計畫的組織？",
+  explanationZh: "Level 0: vague。"
+},
+{
+  id: 82,
+  question: "Which threat intelligence sharing architecture allows multiple organizations to share threat data through a hybrid of centralized and decentralized models?",
+  options: ["Centralized","Hybrid","Federated","Decentralized"],
+  answerIndex: 1,
+  zh: "哪種情資分享架構是中央化與去中心化的混合模式？",
+  explanationZh: "Hybrid exchange architecture。"
+},
+{
+  id: 83,
+  question: "Which type of context in threat analysis refers to the timing and sequence of events?",
+  options: ["Spatial context","Temporal context","Policy context","Historical context"],
+  answerIndex: 1,
+  zh: "威脅分析中的哪種類型脈絡指的是事件的時間與順序？",
+  explanationZh: "Temporal context（時間脈絡）。"
+},
+{
+  id: 84,
+  question: "Which trust model is based on providing evidence to validate the trust between organizations?",
+  options: ["Direct historical trust","Validated trust","Mediated trust","Mandated trust"],
+  answerIndex: 1,
+  zh: "哪種信任模型是基於提供證據來驗證組織間的信任？",
+  explanationZh: "Validated trust。"
+},
+{
+  id: 85,
+  question: "Which analysis method examines strengths, weaknesses, opportunities, and threats of an organization?",
+  options: ["SWOT analysis","Critical path analysis","Analogy analysis","Cone of plausibility"],
+  answerIndex: 0,
+  zh: "哪種分析方法檢視組織的優勢、劣勢、機會與威脅？",
+  explanationZh: "SWOT analysis。"
+},
+{
+  id: 86,
+  question: "Which risk assessment framework developed by NIST provides guidelines for managing information security risk?",
+  options: ["FAIR","ISO 27005","NIST RMF","OCTAVE"],
+  answerIndex: 2,
+  zh: "NIST 發展的哪個風險管理框架提供管理資訊安全風險的指引？",
+  explanationZh: "NIST RMF（Risk Management Framework）。"
+},
+{
+  id: 87,
+  question: "Which type of threat intelligence focuses on providing information like malware hashes, IP addresses, and domain names to support detection and blocking?",
+  options: ["Strategic","Technical","Operational","Tactical"],
+  answerIndex: 1,
+  zh: "哪種情資專注於提供惡意程式雜湊、IP、網域等資訊，支援偵測與阻擋？",
+  explanationZh: "Technical threat intelligence。"
+},
+{
+  id: 88,
+  question: "Which stage of the Cyber Kill Chain involves testing and verifying if the payload successfully executes on the target system?",
+  options: ["Weaponization","Delivery","Installation","Exploitation"],
+  answerIndex: 3,
+  zh: "CKC 哪個階段涉及測試並驗證載荷是否能在目標系統成功執行？",
+  explanationZh: "Exploitation 階段。"
+}
+
+  // 在這裡貼上題庫
+];
+
+let currentQuestions = [];
+let userAnswers = {};
+
+function startQuiz(num) {
+  document.getElementById('result').innerHTML = '';
+  userAnswers = {};
+  if (num === 'all') {
+    currentQuestions = [...QUESTION_BANK];
+  } else {
+    currentQuestions = QUESTION_BANK.sort(() => 0.5 - Math.random()).slice(0, num);
+  }
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const quizDiv = document.getElementById('quiz');
+  quizDiv.style.display = 'block';
+  quizDiv.innerHTML = '';
+
+  currentQuestions.forEach((q, i) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'question-block';
+    qDiv.innerHTML = `<div class="question">Q${i+1}. ${q.question}</div>`;
+
+    const optDiv = document.createElement('div');
+    optDiv.className = 'options';
+    q.options.forEach((opt, idx) => {
+      const id = `q${i}_opt${idx}`;
+      optDiv.innerHTML += `
+        <label><input type="radio" name="q${i}" value="${idx}" id="${id}"> ${opt}</label>`;
+    });
+    qDiv.appendChild(optDiv);
+    quizDiv.appendChild(qDiv);
+  });
+
+  const btn = document.createElement('button');
+  btn.textContent = '提交答案';
+  btn.className = 'submit-btn';
+  btn.onclick = gradeQuiz;
+  quizDiv.appendChild(btn);
+}
+
+function gradeQuiz() {
+  let score = 0;
+  let output = '';
+  currentQuestions.forEach((q, i) => {
+    const selected = document.querySelector(`input[name=q${i}]:checked`);
+    const ansIdx = q.answerIndex;
+    if (selected && parseInt(selected.value) === ansIdx) {
+      score++;
+      output += `<p class='correct'>Q${i+1}. ✔ 正確<br>${q.zh}<br><span class='translation'>${q.explanationZh}</span></p>`;
+    } else {
+      output += `<p class='wrong'>Q${i+1}. ✘ 錯誤<br>正解：${q.options[ansIdx]}<br>${q.zh}<br><span class='translation'>${q.explanationZh}</span></p>`;
+    }
+  });
+  document.getElementById('result').innerHTML = `<h2>得分：${score}/${currentQuestions.length}</h2>` + output;
+}
+
+// === 控制按鈕 ===
+const btn50 = document.getElementById('btn50');
+btn50.onclick = () => startQuiz(50);
+
+document.getElementById('btnAll').onclick = () => startQuiz('all');
+
+document.getElementById('btnReset').onclick = () => {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('quiz').innerHTML = '';
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('btnReset').disabled = true;
+};
+</script>
+</body>
+</html>
